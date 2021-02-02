@@ -5,5 +5,11 @@
  * @returns {object} - returns the new object
  */
 export const pick = (obj, ...fields) => {
+  return Object.keys(obj).reduce((newObj, field) => {
+    if (fields.includes(field)) {
+      newObj[field] = obj[field];
+    }
 
+    return newObj;
+  }, {});
 };
