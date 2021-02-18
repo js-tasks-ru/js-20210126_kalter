@@ -1,63 +1,80 @@
 export default class ColumnChart {
-  constructor({ data = [], label = '', link = '', value = 0 } = {}) {
+  chartHeight = 50;
+
+  constructor({ data = [], label = "", link = "", value = 0 } = {}) {
     this.data = data;
     this.label = label;
     this.link = link;
     this.value = value;
-    this.chartHeight = 50;
 
     this.render();
   }
 
-  getChartHeight() {
+  getSubElements(element) {
+    const elements = element.querySelectorAll("[data-element]");
+
+    return [...elements].reduce((subElements, item) => {
+      subElements[item.dataset.element] = item;
+
+      return subElements;
+    }, {});
+  }
+
+  getChartsHeight() {
     const maxValue = Math.max(...this.data);
     const scaleMultiply = this.chartHeight / maxValue;
 
-    return this.data.map(item => {
+    return this.data.map((item) => {
       return {
-        percent: (item / maxValue * 100).toFixed(0) + '%',
-        value: String(Math.floor(item * scaleMultiply))
+        percent: ((item / maxValue) * 100).toFixed(0) + "%",
+        value: String(Math.floor(item * scaleMultiply)),
       };
     });
   }
 
   renderLink() {
-    if (this.link) {
-      return `<a href="/${this.link}" class="column-chart__link">View all</a>`;
-    }
-
-    return '';
+    return this.link
+      ? `<a href="/${this.link}" class="column-chart__link">View all</a>`
+      : "";
   }
 
-  renderChartItem(chartsHeight) {
-    let string = '';
-    this.data.forEach((item, index) => {
-      string += `<div style="--value: ${chartsHeight[index].value}" data-tooltip=${chartsHeight[index].percent}></div>`;
-    });
+  renderChartsItem() {
+    const chartsHeight = this.getChartsHeight();
 
-    return string;
+    return this.data
+      .map((item, index) => {
+        return `<div style="--value: ${chartsHeight[index].value}" data-tooltip=${chartsHeight[index].percent}></div>`;
+      })
+      .join("");
   }
 
-  render() {
-    const element = document.createElement('div');
-    const chartsHeight = this.getChartHeight();
-
-    element.innerHTML = `
-       <div class="column-chart ${this.data.length ? '' : 'column-chart_loading'}" style="--chart-height: ${this.chartHeight}">
+  get template() {
+    return `
+       <div class="column-chart ${
+         this.data.length ? "" : "column-chart_loading"
+       }" style="--chart-height: ${this.chartHeight}">
         <div class="column-chart__title">
           Total ${this.label}
           ${this.renderLink()}
         </div>
         <div class="column-chart__container">
-          <div data-element="header" class="column-chart__header">${this.value}</div>
+          <div data-element="header" class="column-chart__header">${
+            this.value
+          }</div>
           <div data-element="body" class="column-chart__chart">
-            ${this.renderChartItem(chartsHeight)}
+            ${this.renderChartsItem()}
           </div>
         </div>
       </div>
     `;
+  }
 
+  render() {
+    const element = document.createElement("div");
+
+    element.innerHTML = this.template;
     this.element = element.firstElementChild;
+    this.subElements = this.getSubElements(element);
   }
 
   update({
@@ -71,11 +88,7 @@ export default class ColumnChart {
     this.link = link;
     this.value = value;
 
-    this.render();
-  }
-
-  initEventListeners() {
-
+    this.subElements.body.innerHTML = this.renderChartsItem();
   }
 
   remove() {
